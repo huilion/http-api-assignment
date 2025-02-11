@@ -3,9 +3,73 @@
 <head>
   <title>Our simple HTTP server</title>
   <link rel="stylesheet" type="text/css" href="/style.css">
-  
   <script>
+    const handleResponse = (response) => {
+      response.text().then((resText) => {
+        const contentType = response.headers.get('Content-Type');
 
+        const content = document.querySelector("#content");
+        content.innerHTML = "";
+
+        const h1 = document.createElement('h1');
+        const h3 = document.createElement('h3');
+        
+        if (contentType === 'application/json') {
+          // parse the json back into a js object
+          console.log(resText);
+          const parsedResponse = JSON.parse(resText);
+
+          h3.textContent = `Message: ${parsedResponse.message}`;
+    
+        } else if (contentType === 'text/xml') {
+          console.log(resText);
+          const parsedResponse = new window.DOMParser().parseFromString(resText, 'text/xml');
+          h3.textContent = `Message: ${parsedResponse.querySelector('message').textContent}`;
+        }
+
+        const pageSelect = document.querySelector("#page");
+        const selectedOption = pageSelect.options[pageSelect.selectedIndex].text;
+        h1.textContent = selectedOption;
+
+        content.appendChild(h1);
+        content.appendChild(h3);
+
+      });
+    }
+      const sendFetchRequest = async (url, acceptedType) => {
+        const options = { 
+          method: 'GET',
+          headers: {'Accept': acceptedType}
+        }
+
+        try{
+        const response = await fetch(url, options);
+        handleResponse(response);
+        if (!response.ok) {
+          throw new Error(response.status);
+        }
+       }
+        catch (error) {
+          console.log(error.message);
+      }
+      }
+
+      const init = () => {
+        const sendButton = document.querySelector("#send");
+        const pageSelect = document.querySelector("#page");
+        const typeSelect = document.querySelector("#type");
+
+        const sendRequest = () => {
+          console.log(pageSelect.value);
+          const url = pageSelect.value;
+          const acceptedType = typeSelect.value;
+          sendFetchRequest(url, acceptedType);
+        }
+        
+        sendButton.addEventListener('click', sendRequest)
+      }
+
+      window.onload = init;
   </script>
 </head>
 <body>
